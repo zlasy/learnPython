@@ -15,6 +15,8 @@ headers = {'Content-Type': 'application/json;charset=UTF-8'}
 #res = requests.post(posturl,json=a,headers=headers)
 # print(res.text)
 
+stopWords = ["亲，在吗","转人工","人工","人工客服"]
+
 def getSession(roomId, sessionId):
     try:
         posturl = 'http://10.7.41.191:9009/msgcenter/session/querySessionDetail'
@@ -24,7 +26,6 @@ def getSession(roomId, sessionId):
         j = json.loads(res.text)
         if (j['data']['session']['isTransManual'] == 1 and j['data']['session']['shopId'] == "0"):
             return j['data']['session']['transManualStartDate']
-        #print(transDate)
         return None
     except Exception as error:
         print("error:" + roomId, error)
@@ -54,6 +55,7 @@ def invokeAi(roomId,custId,sessionId,content):
 
 def main():
     txt=open("H:\\分类语料.txt", 'r', encoding='utf8')
+    file = open("H:\\fen.txt", 'w', encoding='utf8')
     for line in txt:
         line = re.sub(r'[^A-Za-z0-9\t]+',' ',line)
         s = line.split('\t')
@@ -61,10 +63,15 @@ def main():
         sessionId = s[1]
         custId = s[2]
         tDate = getSession(roomId, sessionId)
+        if tDate == None:
+            continue
         content = getMessage(roomId, sessionId, tDate)
-        if (content and len(content) > 3):
-            invokeAi(roomId,custId,sessionId,content)
+        if (content and len(content) > 3 and content not in stopWords):
+            #invokeAi(roomId,custId,sessionId,content)
+            file.write(roomId + "\t" + custId + "\t" + sessionId + "\t" + content + "\n")
             print(content)
+        # time.sleep( 0.5 )
+    file.close()
     txt.close()
 
 if __name__ == '__main__':
