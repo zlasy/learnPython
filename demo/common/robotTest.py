@@ -15,8 +15,6 @@ headers = {'Content-Type': 'application/json;charset=UTF-8'}
 # res = requests.post(posturl,json=a,headers=headers)
 # print(res.text)
 
-stopWords = ["亲，在吗", "转人工", "人工", "人工客服"]
-
 
 def getSession(roomId, sessionId):
     try:
@@ -50,32 +48,37 @@ def getMessage(roomId, sessionId, transDate):
     return ",".join(i for i in l)
 
 
-def invokeAi(roomId, custId, sessionId, content):
-    aiurl = 'http://10.255.242.225:9000/classify/get'
-    p = {"tenantId": 1, "roomId": roomId, "custId": custId, "sessionId": sessionId, "companyId": 1, "content": content}
+def invokeAi(question):
+    aiurl = 'http://10.255.242.225:9000/question/matchVerbose'
+    #aiurl = 'http://localhost:9000/question/matchVerbose'
+    p = {"companyId": 1, "question": question}
     aires = requests.post(aiurl, json=p, headers=headers)
-    print(aires.text)
+    printTop3(aires.text)
+
+
+def printTop3(result):
+    data = json.loads(result)['data']
+    print(data)
+    print('lucene')
+    for i in range(3):
+        item = data['luceneHits'][i]
+        print('qid=' + str(item['qid']) + ',similarid=' + str(item['similarId']) + ',question=' + item['question'] + ',score=' + str(item['score']))
+    print('word2vec')
+    for i in range(3):
+        item = data['w2vHits'][i]
+        print('qid=' + str(item['qid']) + ',similarid=' + str(item['similarId']) + ',question=' + item[
+            'question'] + ',score=' + str(item['score']))
 
 
 def main():
-    txt = open("H:\\分类语料.txt", 'r', encoding='utf8')
-    file = open("H:\\fen.txt", 'w', encoding='utf8')
-    for line in txt:
-        line = re.sub(r'[^A-Za-z0-9\t]+', ' ', line)
-        s = line.split('\t')
-        roomId = s[0]
-        sessionId = s[1]
-        custId = s[2]
-        tDate = getSession(roomId, sessionId)
-        if tDate == None:
-            continue
-        content = getMessage(roomId, sessionId, tDate)
-        if (content and len(content) > 3 and content not in stopWords):
-            # invokeAi(roomId,custId,sessionId,content)
-            file.write(roomId + "\t" + custId + "\t" + sessionId + "\t" + content + "\n")
-            print(content)
+    txt = open("H:\\qaList.txt", 'r', encoding='utf8')
+    content = '这个换货为啥变成自行邮寄的'
+    invokeAi(content)
+    #for line in txt:
+     #   if content and len(content) > 3:
+     #       invokeAi(roomId, custId, sessionId, content)
+     #       print(content)
         # time.sleep( 0.5 )
-    file.close()
     txt.close()
 
 
