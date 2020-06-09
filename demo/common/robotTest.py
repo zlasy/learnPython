@@ -11,9 +11,6 @@ import re
 
 # posturl = 'http://10.7.41.191:9009/msgcenter/qualityCheck/querySessionForQc'
 headers = {'Content-Type': 'application/json;charset=UTF-8'}
-# a = {"tenantId":1,"startTime":1562342400000,"endTime":1565020799000,"pageNum":1,"pageSize":10,"shopId":"0"}
-# res = requests.post(posturl,json=a,headers=headers)
-# print(res.text)
 
 
 def getSession(roomId, sessionId):
@@ -53,16 +50,21 @@ def invokeAi(question):
     #aiurl = 'http://localhost:9000/question/matchVerbose'
     p = {"companyId": 1, "question": question}
     aires = requests.post(aiurl, json=p, headers=headers)
-    printTop3(aires.text)
+    items = json.loads(aires.text)['data']['w2vHits']
+    if len(str(items)) > 3:
+        print(str(items[0]['qid']) + '\t' + items[0]['question'])
+    else:
+        print('None')
+    # printTop3(aires.text)
 
 
 def printTop3(result):
     data = json.loads(result)['data']
     print(data)
     print('lucene')
-    for i in range(3):
-        item = data['luceneHits'][i]
-        print('qid=' + str(item['qid']) + ',similarid=' + str(item['similarId']) + ',question=' + item['question'] + ',score=' + str(item['score']))
+#    for i in range(3):
+#        item = data['luceneHits'][i]
+#        print('qid=' + str(item['qid']) + ',similarid=' + str(item['similarId']) + ',question=' + item['question'] + ',score=' + str(item['score']))
     print('word2vec')
     for i in range(3):
         item = data['w2vHits'][i]
@@ -71,14 +73,9 @@ def printTop3(result):
 
 
 def main():
-    txt = open("H:\\qaList.txt", 'r', encoding='utf8')
-    content = '这个换货为啥变成自行邮寄的'
-    invokeAi(content)
-    #for line in txt:
-     #   if content and len(content) > 3:
-     #       invokeAi(roomId, custId, sessionId, content)
-     #       print(content)
-        # time.sleep( 0.5 )
+    txt = open("H:\\q.txt", 'r', encoding='utf8')
+    for line in txt:
+       invokeAi(line)
     txt.close()
 
 
